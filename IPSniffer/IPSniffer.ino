@@ -82,6 +82,7 @@ void printData()
 			tpPrint((char*)"MAC: ");
 			tpPrint((char*)newMAC.c_str()); tpPrint((char*)"\n");
 			tpPrint((char*)"\n\n\n\n");
+			delay(2000);
 			tpDisconnect();
 		}
 	}
