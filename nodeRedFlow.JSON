@@ -1,0 +1,117 @@
+[
+    {
+        "id": "0325438c8ca3a716",
+        "type": "tab",
+        "label": "IPSniffer",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "c27fd0e4f6a60b11",
+        "type": "udp in",
+        "z": "0325438c8ca3a716",
+        "name": "",
+        "iface": "",
+        "port": "67",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "buffer",
+        "x": 90,
+        "y": 200,
+        "wires": [
+            [
+                "7f9a1432608790d7",
+                "7b7f10efb772abee"
+            ]
+        ]
+    },
+    {
+        "id": "7b7f10efb772abee",
+        "type": "debug",
+        "z": "0325438c8ca3a716",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 590,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "7f9a1432608790d7",
+        "type": "function",
+        "z": "0325438c8ca3a716",
+        "name": "DHCP Packet Parser",
+        "func": "const hexDigits = \"0123456789ABCDEF\";\nconst DHCP_PACKET_CLIENT_ADDR_LEN_OFFSET = 2;\nconst DHCP_PACKET_CLIENT_ADDR_OFFSET = 28;\nlet request = false;\n\nlet printIP = function()\n{\n    \n}\nlet printHex = function()\n{\n    \n}\n\nlet data = msg.payload;\nconst length = data.length;\n\n\tlet tempName = \"\";\n\tlet tempIP = \"\";\n\tlet tempMAC = \"\";\n\n\tconsole.log(\"DHCP Packet\");\n\t//printHex(data, length);\n\tconsole.log(\"MAC address: \");\n\tfor(let i = 0; i < data[DHCP_PACKET_CLIENT_ADDR_LEN_OFFSET]; i++)\n\t\tif(i < data[DHCP_PACKET_CLIENT_ADDR_LEN_OFFSET] - 1)\n\t\t\tconsole.log(\"%02X:\", data[DHCP_PACKET_CLIENT_ADDR_OFFSET + i]);\n\t\telse\n\t\t\tconsole.log(\"%02X\", data[DHCP_PACKET_CLIENT_ADDR_OFFSET + i]);\n\tfor(let i = 0; i < data[DHCP_PACKET_CLIENT_ADDR_LEN_OFFSET]; i++)\n\t{\n\t\ttempMAC += hexDigits[data[DHCP_PACKET_CLIENT_ADDR_OFFSET + i] >> 4];\n\t\ttempMAC += hexDigits[data[DHCP_PACKET_CLIENT_ADDR_OFFSET + i] & 15];\n\t\tif(i < data[DHCP_PACKET_CLIENT_ADDR_LEN_OFFSET] - 1)\n\t\t\ttempMAC += \":\";\n\t}\n\n\tconsole.log();\n\t//parse options\n\tlet opp = 240;\n\twhile(opp < length)\n\t{\n\t\tswitch(data[opp])\n\t\t{\n\t\t\tcase 0x0C:\n\t\t\t{\n\t\t\t\tconsole.log(\"Device name: \");\n\t\t\t\tfor(let i = 0; i < data[opp + 1]; i++)\n\t\t\t\t{\n\t\t\t\t\tconsole.log(data[opp + 2 + i]);\n\t\t\t\t\ttempName += String.fromCharCode(data[opp + 2 + i]);\n\t\t\t\t}\n\t\t\t\tconsole.log();\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tcase 0x35:\n\t\t\t{\n\t\t\t\tconsole.log(\"Packet Type: \");\n\t\t\t\tswitch(data[opp + 2])\n\t\t\t\t{\n\t\t\t\t\tcase 0x01:\n\t\t\t\t\t\tconsole.log(\"Discover\");\n\t\t\t\t\tbreak;\n\t\t\t\t\tcase 0x02:\n\t\t\t\t\t\tconsole.log(\"Offer\");\n\t\t\t\t\tbreak;\n\t\t\t\t\tcase 0x03:\n\t\t\t\t\t\tconsole.log(\"Request\");\n\t\t\t\t\t\trequest = true;\n\t\t\t\t\tbreak;\n\t\t\t\t\tcase 0x05:\n\t\t\t\t\t\tconsole.log(\"ACK\");\n\t\t\t\t\tbreak;\n\t\t\t\t\tdefault:\n\t\t\t\t\t\tconsole.log(\"Unknown\");\n\t\t\t\t}\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tcase 0x32:\n\t\t\t{\n\t\t\t\tconsole.log(\"Device IP: \");\n\t\t\t\t//printIP(&data[opp + 2]);\n\t\t\t\tconsole.log();\n\t\t\t\tfor(let i = 0; i < 4; i++)\n\t\t\t\t{\n\t\t\t\t\ttempIP += data[opp + 2 + i];\n\t\t\t\t\tif(i < 3) tempIP += '.';\n\t\t\t\t}\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tcase 0x36:\n\t\t\t{\n\t\t\t\tconsole.log(\"Server IP: \");\n\t\t\t\t//printIP(&data[opp + 2]);\n\t\t\t\tconsole.log();\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tcase 0x37:\n\t\t\t{\n\t\t\t\tconsole.log(\"Request list: \");\n\t\t\t\t//printHex(&data[opp + 2], data[opp + 1]);\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tcase 0x39:\n\t\t\t{\n\t\t\t\tconsole.log(\"Max DHCP message size: \");\n\t\t\t\tconsole.log((data[opp + 2] << 8) | data[opp + 3]);\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tcase 0xff:\n\t\t\t{\n\t\t\t\tconsole.log(\"End of options.\");\n\t\t\t\topp = length; \n\t\t\t\tcontinue;\n\t\t\t}\n\t\t\tdefault:\n\t\t\t{\n\t\t\t\tconsole.log(\"Unknown option: \");\n\t\t\t\t//console.log(data[opp]);\n\t\t\t\tconsole.log(\" (length \");\n\t\t\t\t//console.log(data[opp + 1]);\n\t\t\t\tconsole.log(\")\");\n\t\t\t\t//printHex(&data[opp + 2], data[opp + 1]);\n\t\t\t}\n\t\t}\n\n\t\topp += data[opp + 1] + 2;\n\t}\n\nif(!request)\n    return null;\n    \nmsg.payload = {\n\tname: tempName,\n\tip: tempIP,\n\tmac: tempMAC\n};\nnode.warn(msg);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 300,
+        "wires": [
+            [
+                "7b7f10efb772abee",
+                "5a9d04c12b7e0730"
+            ]
+        ]
+    },
+    {
+        "id": "860df51667d82598",
+        "type": "json",
+        "z": "0325438c8ca3a716",
+        "name": "to json",
+        "property": "payload",
+        "action": "",
+        "pretty": true,
+        "x": 750,
+        "y": 440,
+        "wires": [
+            [
+                "069dd086c9b33ec2"
+            ]
+        ]
+    },
+    {
+        "id": "069dd086c9b33ec2",
+        "type": "udp out",
+        "z": "0325438c8ca3a716",
+        "name": "TTS String",
+        "addr": "192.168.178.51",
+        "iface": "",
+        "port": "6969",
+        "ipv": "udp4",
+        "outport": "",
+        "base64": false,
+        "multicast": "false",
+        "x": 930,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "5a9d04c12b7e0730",
+        "type": "function",
+        "z": "0325438c8ca3a716",
+        "name": "to TTS payload",
+        "func": "let url = \"http://translate.google.com/translate_tts?ie=UTF-8\" + \n    \"&tl=\" + encodeURIComponent(\"en\") + \n    \"&client=tw-ob\" + \n    \"&q=\" + encodeURIComponent(\"Device: \" + msg.payload.name + \" IP \" + msg.payload.ip) + \n    \"&ttsspeed=\" + encodeURIComponent(1);\n\nreturn {payload: {\"url\": url, \"pitch\": 1, \"type\": 0}};",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 440,
+        "wires": [
+            [
+                "860df51667d82598"
+            ]
+        ]
+    }
+]
