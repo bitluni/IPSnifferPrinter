@@ -1,4 +1,4 @@
-"# IPSnifferPrinter" 
+# IPSnifferPrinter"
 
 1. Fill ssid and password in the code
 2. Upload to esp32 with huge app setting
